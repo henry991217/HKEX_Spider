@@ -15,7 +15,7 @@ sharehoding_percent=[]
 # hkex披露易1865定向爬虫
 class HKex_Search:
     URL = "https://www3.hkexnews.hk/sdw/search/searchsdw_c.aspx"
-
+    path='D:/披露易每日定向数据/'
     def __init__(self):
 
         self.session = requests_html.HTMLSession()  # 创建的request对象
@@ -98,22 +98,37 @@ class HKex_Search:
         # participant_name[:]=participant_name_final
         # shareholding_final=[i for i in shareholding]
         # sharehoding_percent_final=[i for i in sharehoding_percent]#列表转换
+        if os.path.exists(self.path)==True:#判断路径存在
+            if os.path.exists(self.path+'{}.xls'.format(dataget.getYesterday())):#判断文件存在
+             os.system(self.path+'{}.xls'.format(dataget.getYesterday()))#自动打开存在路径下已有的excel
+             return 0
+            if os.path.exists(self.path+'{}.xls'.format(dataget.getYesterday()))==False:#误删文件后重新爬取下载
+                workbook=xlwt.Workbook(encoding='utf-8')
+                data_sheet=workbook.add_sheet("{}".format(dataget.getYesterday()))
+                data_sheet.write(0,0,label='券商名')
+                data_sheet.write(0,1,label='持股量')
+                data_sheet.write(0,2,label='流通比')
 
-        workbook=xlwt.Workbook(encoding='utf-8')
-        data_sheet=workbook.add_sheet("{}".format(dataget.getYesterday()))
-        data_sheet.write(0,0,label='券商名')
-        data_sheet.write(0,1,label='持股量')
-        data_sheet.write(0,2,label='流通比')
-        save_dir='D:/披露易每日定向数据/'
-        if os.path.exists(save_dir)==True:
-            os.system(save_dir+'{}.xls'.format(dataget.getYesterday()))#自动打开生成的excel
-        else:os.makedirs(save_dir)
-        for i in range(len(participant_name_final)):
+                for i in range(len(participant_name_final)):
+                 data_sheet.write(i+1,0,label=participant_name_final[i])
+                 data_sheet.write(i+1,1,label=shareholding_final[i])
+                 data_sheet.write(i+1,2,label=sharehoding_percent_final[i])
+                workbook.save(self.path+'{}.xls'.format(dataget.getYesterday()))
+                os.system(self.path+'{}.xls'.format(dataget.getYesterday()))#打开文件
+        elif os.path.exists(self.path)==False:
+         os.makedirs(self.path)
+         workbook=xlwt.Workbook(encoding='utf-8')
+         data_sheet=workbook.add_sheet("{}".format(dataget.getYesterday()))
+         data_sheet.write(0,0,label='券商名')
+         data_sheet.write(0,1,label='持股量')
+         data_sheet.write(0,2,label='流通比')
+
+         for i in range(len(participant_name_final)):
            data_sheet.write(i+1,0,label=participant_name_final[i])
            data_sheet.write(i+1,1,label=shareholding_final[i])
            data_sheet.write(i+1,2,label=sharehoding_percent_final[i])
-        workbook.save(save_dir+'{}.xls'.format(dataget.getYesterday()))
-        os.system(save_dir+'{}.xls'.format(dataget.getYesterday()))#生成并打开excel
+         workbook.save(self.path+'{}.xls'.format(dataget.getYesterday()))
+         os.system(self.path+'{}.xls'.format(dataget.getYesterday()))#生成并打开excel
 
 
 
