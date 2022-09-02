@@ -11,9 +11,8 @@ import tkinter
 participant_name = []
 shareholding = []
 sharehoding_percent = []  # 差额
-market_intermediary=[]#市场中介人
 total=[]#总数
-issued_share=[]#已发行股份
+issued_share=[]#已发行股票总数
 
 # hkex披露易1529定向爬虫
 class HKex_Search:
@@ -61,6 +60,10 @@ class HKex_Search:
             sharehoding_percent.append(parse.xpath(
                 '//div[@id="pnlResultNormal"]//table//td[@class="col-shareholding-percent text-right"]//div[@class="mobile-list-body"]/text()')[i])  # 将每个元素放入列表
 
+        total.append(parse.xpath('//div[@id="pnlResultSummary"]//div[@class="ccass-search-datarow ccass-search-total"]//div[@class="shareholding"]//div[@class="value"]/text()'))#持股总数
+        issued_share.append((parse.xpath('//div[@id="pnlResultSummary"]//div[@class="summary-value"]/text()')))#已发行股份总数
+
+
         # print(participant_name)
         # print(shareholding)
         # print(sharehoding_percent)#验证xpath元素爬取
@@ -87,11 +90,15 @@ class HKex_Search:
                 data_sheet.write(0, 0, label='券商名')
                 data_sheet.write(0, 1, label='持股量')
                 data_sheet.write(0, 2, label='持股差额')
-
+                data_sheet.write(0,5,label='于中央结算系统的持股量总数')
+                data_sheet.write(0,6,label='已发行股份/权证/单位')
                 for i in range(len(participant_name_final)):
                     data_sheet.write(i + 1, 0, label=participant_name_final[i])
                     data_sheet.write(i + 1, 1, label=shareholding_final[i])
                     data_sheet.write(i + 1, 2, label=sharehoding_percent_final[i])
+
+                data_sheet.write(1,5,label=total[0])
+                data_sheet.write(1,6,label=issued_share[0])
                 workbook.save(self.path + '{}'.format(input_date_data) + '_' + input_stock_code + '.xls')
                 os.system(self.path + '{}'.format(input_date_data) + '_' + input_stock_code + '.xls')  # 打开文件
         elif os.path.exists(self.path) == False:
@@ -101,11 +108,15 @@ class HKex_Search:
             data_sheet.write(0, 0, label='券商名')
             data_sheet.write(0, 1, label='持股量')
             data_sheet.write(0, 2, label='流通比')
-
+            data_sheet.write(0,5,label='于中央结算系统的持股量总数')
+            data_sheet.write(0,6,label='已发行股份/权证/单位')
             for i in range(len(participant_name_final)):
                 data_sheet.write(i + 1, 0, label=participant_name_final[i])
                 data_sheet.write(i + 1, 1, label=shareholding_final[i])
                 data_sheet.write(i + 1, 2, label=sharehoding_percent_final[i])
+
+            data_sheet.write(1,5,label=total[0])#总数
+            data_sheet.write(1,6,label=issued_share[0])#已发行股份
             workbook.save(self.path + '{}'.format(input_date_data) + '_' + input_stock_code + '.xls')
             os.system(self.path + '{}'.format(input_date_data) + '_' + input_stock_code + '.xls')  # 生成并打开excel
 
@@ -123,9 +134,11 @@ class HKex_Search:
 
         window = tkinter.Tk()
         button1 = tkinter.Button(window, text='获取指定日期的披露易持股信息',bg='Red',command=self.getData)  # 获取当天披露易持股信息
-        button2 = tkinter.Button(window, text='获取制定日期之差的持股差额', bg='SkyBlue', command=self.getBalance)
+        button2 = tkinter.Button(window, text='获取指定日期之差的持股差额', bg='SkyBlue', command=self.getBalance)
+        button3=tkinter.Button(window,text='退出',bg='yellow',command=window.quit)
         button1.grid(row=0, column=0)
         button2.grid(row=0, column=2)
+        button3.grid(row=6,column=2)
         window.geometry("350x150+800+1440")  # 主界面窗口显示
         window.title('披露易数据爬虫')
         window.mainloop()
@@ -147,8 +160,34 @@ class HKex_Search:
             elif (len(box) < 10 or len(box) > 10 or str(box).isalpha() != True):
                 warning = simpledialog.messagebox.showerror(title='严重警报', message='日期格式有误,唔好乱鬼咁输啊！')
 
-    def getBalance(self):
-        pass
+    def input_Date_Balance1(self):
+        while True:
+            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据起始日期：(格式：XXXX/XX/XX)', initialvalue='2022/')
+            if (str(box) != None and len(box) == 10):  # 保证用户输入内容非空长度为10且无字母
+                data_date = str(box)
+                return data_date
+            elif (len(box) < 10 or len(box) > 10 or str(box).isalpha() != True):
+                warning = simpledialog.messagebox.showerror(title='严重警报', message='日期格式有误,唔好乱鬼咁输啊！')
+
+    def input_Date_Balance2(self):
+        while True:
+            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据截止日期：(格式：XXXX/XX/XX)', initialvalue='2022/')
+            if (str(box) != None and len(box) == 10):  # 保证用户输入内容非空长度为10且无字母
+                data_date = str(box)
+                return data_date
+            elif (len(box) < 10 or len(box) > 10 or str(box).isalpha() != True):
+                warning = simpledialog.messagebox.showerror(title='严重警报', message='日期格式有误,唔好乱鬼咁输啊！')
+
+
+
+
+
+    def getBalance(self):#传入参数command
+        start_date=self.input_Date_Balance1()
+        final_date=self.input_Date_Balance2()
+
+    def BalanceCalculate(self,start_date,end_date):
+
 
 
 if __name__ == "__main__":
