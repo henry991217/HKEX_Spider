@@ -1,5 +1,7 @@
 import datetime
 import os
+
+import openpyxl
 from lxml import etree
 import requests
 import xlwt
@@ -168,32 +170,36 @@ class HKex_Search:
 
     def file_save1(self, participant_name_final, shareholding_final, sharehoding_percent_final, input_stock_code,
               input_date_start,input_date_final):  # 在D盘新建文件夹并将信息保存进excel
-
       input_date_start = str.replace(input_date_start, '/', '-')  # 替换‘/’否侧会导致路径解析错误
-      input_date_final=str.replace(input_date_final,'/','-')
+      input_date_final=str.replace(input_date_final,'/','-') #替换‘/’否侧会导致路径解析错误
+      filename=self.path + '{}'.format(input_date_start) + '_'+input_date_final+ '_' + input_stock_code + '.xlsx'#已创建的文件路径名
+      # sheet_name="{}".format(input_date_start+'-'+input_date_final)#表格名字
+
       if os.path.exists(self.path) == True:# 判断路径存在
-        if os.path.exists(self.path + '{}'.format(input_date_start) + '_'+input_date_final+ '_' + input_stock_code + '.xlsx')==True:
-          filename=self.path+input_date_start+'_'+input_date_final+'_'+input_stock_code+'.xlsx'#已创建的文件路径名
-          exist_workbook=xlrd.open_workbook(filename)#xlrd打开
-          get_sheet=copy(exist_workbook)
+        if os.path.exists(filename)==True:
+          workbook=xlrd.open_workbook(filename)
+          write_book=copy(workbook)
+          write_book.get_sheet(0).write(0, 10, label='券商名')
+          write_book.get_sheet(0).write(0,11,label='持股量')
+          write_book.get_sheet(0).write(0, 12, label='流通比')
 
-          data_sheet.write(0, 10, label='券商名')
-          data_sheet.write(0, 11, label='持股量')
-          data_sheet.write(0, 12, label='流通比')
-          data_sheet.write(0,15,label='于中央结算系统的持股量总数')
-          data_sheet.write(0,16,label='已发行股份/权证/单位')
-          for i in range(len(participant_name_final)):
-            data_sheet.write(i + 1, 10, label=participant_name_final[i])
-            data_sheet.write(i + 1, 11, label=shareholding_final[i])
-            data_sheet.write(i + 1, 12, label=sharehoding_percent_final[i])
+          write_book.get_sheet(0).write(0,15,label='于中央结算系统的持股量总数')
+          write_book.get_sheet(0).write(0,16,label='已发行股份/权证/单位')
+          for i in range(len(participant_name_final)):#循环添加数据
+            write_book.get_sheet(0).write(i + 1, 10, label=participant_name_final[i])
+            write_book.get_sheet(0).write(i + 1, 11, label=shareholding_final[i])
+            write_book.get_sheet(0).write(i + 1, 12, label=sharehoding_percent_final[i])
+          write_book.get_sheet(0).write(1,15,label=total[0])#总数
+          write_book.get_sheet(0).write(1,16,label=issued_share[0])#已发行股份
 
-          data_sheet.write(1,15,label=total[0])#总数
-          data_sheet.write(1,16,label=issued_share[0])#已发行股份
-
-          old_workbook.save(self.path + '{}'.format(input_date_start) + '_'+input_date_final+'_'+ input_stock_code + '.xlsx')
-          return (self.path + '{}'.format(input_date_start) + '_'+input_date_final+'_'+ input_stock_code + '.xlsx')
+          write_book.save(filename)
 
 
+    def get_sheetdata(self,filename,sheetname):
+        workbook=xlrd.open_workbook(filename)
+        get_sheet=workbook.sheet_by_name(sheetname)
+
+        return  sheetname#获取的数据
 
 
     def file_save2(self, participant_name_final, shareholding_final, sharehoding_percent_final, input_stock_code,
@@ -201,13 +207,13 @@ class HKex_Search:
 
         input_date_start = str.replace(input_date_start, '/', '-')  # 替换‘/’否侧会导致路径解析错误
         input_date_final=str.replace(input_date_final,'/','-')
-        if os.path.exists(self.path) == True:  # 判断路径存在
+        if os.path.exists(self.path) == True:  # 判断主目录"披露易文件爬取"路径存在
             if os.path.exists(self.path + '{}'.format(input_date_start) + '_'+input_date_final+'_' + input_stock_code + '.xlsx'):  # 判断文件存在
                 os.system(
                     self.path + '{}'.format(input_date_start) + '_' +input_date_final+'_'+ input_stock_code + '.xlsx')  # 自动打开存在路径下已有的excel
                 return 0
             if os.path.exists(
-                    self.path + '{}'.format(input_date_start) + '_' +input_date_final+'_'+ input_stock_code + '.xlsx') == False:  # 误删文件后重新爬取下载
+                    self.path + '{}'.format(input_date_start) + '_' +input_date_final+'_'+ input_stock_code + '.xlsx') == False:  # 文件不存在（误删） 重新爬取下载
                 workbook = xlwt.Workbook(encoding='utf-8')
                 data_sheet = workbook.add_sheet("{}".format(input_date_start+'-'+input_date_final))
                 data_sheet.write(0, 0, label='券商名')
@@ -224,7 +230,7 @@ class HKex_Search:
                 data_sheet.write(1,6,label=issued_share[0])
                 workbook.save(self.path + '{}'.format(input_date_start) + '_'+input_date_final+'_' + input_stock_code + '.xlsx')
 
-        elif os.path.exists(self.path) == False:
+        elif os.path.exists(self.path) == False:#主目录路径不存在创建路径并添加数据
             os.makedirs(self.path)
             workbook = xlwt.Workbook(encoding='utf-8')
             data_sheet = workbook.add_sheet("{}".format(input_date_start)+'-'+input_date_final)
@@ -313,15 +319,16 @@ class HKex_Search:
         self.file_save2(participant_name_final=participant_name, shareholding_final=shareholding,
                sharehoding_percent_final=sharehoding_percent, input_stock_code=input_code,
                input_date_start=start_date,input_date_final=final_date)
-        final_file=self.file_save1(participant_name_final=participant_name1, shareholding_final=shareholding1,
+        self.file_save1(participant_name_final=participant_name1, shareholding_final=shareholding1,
                        sharehoding_percent_final=sharehoding_percent1, input_stock_code=input_code,
                        input_date_final=final_date,input_date_start=start_date)
 
-        self.BalanceCalculate(start_date,final_date,final_file)#读取文档并对比券商并计算差额
+        #self.BalanceCalculate(start_date,final_date,final_file)#读取文档并对比券商并计算差额
 
 
 
     def BalanceCalculate(self,start_date,end_date,src):
+        pass
         workbook=xlrd.open_workbook(src)
 
 
