@@ -1,7 +1,5 @@
 import datetime
 import os
-
-import openpyxl
 from lxml import etree
 import requests
 import xlwt
@@ -193,13 +191,22 @@ class HKex_Search:
           write_book.get_sheet(0).write(1,16,label=issued_share[0])#已发行股份
 
           write_book.save(filename)
+          return filename
 
+    def get_sheetdata(self,filename,sheetname):#读取文档中的数据
 
-    def get_sheetdata(self,filename,sheetname):
         workbook=xlrd.open_workbook(filename)
-        get_sheet=workbook.sheet_by_name(sheetname)
+        table=workbook.sheet_by_name(sheetname)
+        row_len=len(table.row_values(0))-1
+        col_len=len(table.col_values(0))-1
+        print('column长度:'+'{}'.format(col_len),)
+        for i in range(col_len):
+         start_dic={}
+         start_dic[table.cell(i+1,0).value]=table.col_values(1)[i+1]
+        print(start_dic)
 
-        return  sheetname#获取的数据
+
+        #获取的数据
 
 
     def file_save2(self, participant_name_final, shareholding_final, sharehoding_percent_final, input_stock_code,
@@ -290,7 +297,7 @@ class HKex_Search:
 
     def input_Date_Balance1(self):
         while True:
-            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据起始日期：(格式：XXXX/XX/XX)', initialvalue='2022/')
+            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据起始日期：(格式：XXXX/XX/XX)(初始日期<截止日期)', initialvalue='2022/')
             if (str(box) != None and len(box) == 10):  # 保证用户输入内容非空长度为10且无字母
                 data_date = str(box)
                 return data_date
@@ -299,7 +306,7 @@ class HKex_Search:
 
     def input_Date_Balance2(self):
         while True:
-            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据截止日期：(格式：XXXX/XX/XX)', initialvalue='2022/')
+            box = simpledialog.askstring(title='披露易数据爬取', prompt='请输入要爬取的差额数据截止日期：(格式：XXXX/XX/XX)(初始日期<截止日期)', initialvalue='2022/')
             if (str(box) != None and len(box) == 10):  # 保证用户输入内容非空长度为10且无字母
                 data_date = str(box)
                 return data_date
@@ -319,17 +326,21 @@ class HKex_Search:
         self.file_save2(participant_name_final=participant_name, shareholding_final=shareholding,
                sharehoding_percent_final=sharehoding_percent, input_stock_code=input_code,
                input_date_start=start_date,input_date_final=final_date)
-        self.file_save1(participant_name_final=participant_name1, shareholding_final=shareholding1,
+        filename=self.file_save1(participant_name_final=participant_name1, shareholding_final=shareholding1,
                        sharehoding_percent_final=sharehoding_percent1, input_stock_code=input_code,
-                       input_date_final=final_date,input_date_start=start_date)
+                       input_date_final=final_date,input_date_start=start_date)#传入的参数：参与信息,股票代码,初始和终末日期
+        sheet_name=str.replace(("{}".format(start_date+'-'+final_date)),'/','-')#表格名字
+        self.BalanceCalculate(start_date=start_date,end_date=final_date,filename=filename,sheet_name=sheet_name)#读取文档并对比券商并计算差额
 
-        #self.BalanceCalculate(start_date,final_date,final_file)#读取文档并对比券商并计算差额
+
+
+    def BalanceCalculate(self,start_date,end_date,filename,sheet_name):
+        start_date_dict={}
+        final_date_dict={}
+        self.get_sheetdata(filename=filename,sheetname=sheet_name)
 
 
 
-    def BalanceCalculate(self,start_date,end_date,src):
-        pass
-        workbook=xlrd.open_workbook(src)
 
 
 
