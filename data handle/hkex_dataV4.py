@@ -7,6 +7,7 @@ from tkinter import simpledialog
 import tkinter
 import xlrd
 from xlutils.copy import copy
+from collections import Counter
 
 participant_name = []
 shareholding = []
@@ -193,20 +194,7 @@ class HKex_Search:
           write_book.save(filename)
           return filename
 
-    def get_sheetdata(self,filename,sheetname):#读取文档中的数据
 
-        workbook=xlrd.open_workbook(filename)
-        table=workbook.sheet_by_name(sheetname)
-        row_len=len(table.row_values(0))-1
-        col_len=len(table.col_values(0))-1
-        print('column长度:'+'{}'.format(col_len),)
-        for i in range(col_len):
-         start_dic={}
-         start_dic[table.cell(i+1,0).value]=table.col_values(1)[i+1]
-        print(start_dic)
-
-
-        #获取的数据
 
 
     def file_save2(self, participant_name_final, shareholding_final, sharehoding_percent_final, input_stock_code,
@@ -313,8 +301,57 @@ class HKex_Search:
             elif (len(box) < 10 or len(box) > 10 or str(box).isalpha() != True):
                 warning = simpledialog.messagebox.showerror(title='严重警报', message='日期格式有误,唔好乱鬼咁输啊！')
 
+    def get_sheetdata(self,filename,sheetname):  #读取文档中的数据并比对获取差额
+
+     workbook=xlrd.open_workbook(filename)
+     table=workbook.sheet_by_name(sheetname)
+     start_dict={}#存储初始日期的信息
+     end_dict={}#存储截止日期信息
+     sub_end_dict={}
+     sub_start_dict={}
+     add_dict={}
+     i=0
+     while i<len(table.col_values(1,start_rowx=1)):#初始日期数据存入字典
+        start_dict[table.cell(i+1,0).value]=table.col_values(1,start_rowx=1)[i]
+        i+=1
+     j=0
+     while j<len(table.col_values(10,start_rowx=1)):#截止日期数据存入字典
+         end_dict[table.cell(j+1,10).value]=table.col_values(11,start_rowx=1)[j]
+         j+=1
+     # print(start_dic.keys()&end_dic.keys())
+     self.dict_keydel(end_dict)
+     self.dict_keydel(start_dict)#去除空字键值
+
+     for key in start_dict:
+        start_dict[key]=int(str.replace(start_dict[key],',',''))
+     for key in end_dict:
+        end_dict[key]=int(str.replace(end_dict[key],',',''))
+         #将键值的逗号替换成空格
+     sub_end_dict=dict(Counter(end_dict)-Counter(start_dict))
+     sub_start_dict=dict(Counter(start_dict)-Counter(end_dict))
+
+     for key in sub_start_dict:#转换为负数
+         sub_start_dict[key]=-(sub_start_dict[key])
+
+     print(sub_start_dict)
+     print(sub_end_dict)
+     # print(add_dict)
+
+     # print(start_dict)
+     # print(end_dict)
 
 
+
+
+
+
+    #获取的数据
+
+    def dict_keydel(self,dict):#删除字典的空键
+
+        for i in list(dict.keys()):
+            if not dict[i]:
+                del  dict[i]
 
 
     def getBalance(self):#传入按钮参数command
@@ -356,7 +393,10 @@ class HKex_Search:
 
 if __name__ == "__main__":
     dataget = HKex_Search()  # 创建对象
-    dataget.main_window()  # 进入程序主窗口
+    #dataget.main_window()  # 进入程序主窗口
+    filename=r'D:\披露易每日定向数据\2022-04-04_2022-04-09_01865.xlsx'
+    sheetname='2022-04-04-2022-04-09'
+    dataget.get_sheetdata(filename=filename,sheetname=sheetname)
 
 '''1.返回当天披露易数据
    2.返回数据差额     '''
