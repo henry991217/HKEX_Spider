@@ -333,12 +333,12 @@ class HKex_Search:
      for key in sub_start_dict:#转换为负数
          sub_start_dict[key]=-(sub_start_dict[key])
 
+     add_dict={**sub_end_dict,**sub_start_dict}#字典相同的相加，不同的值添加 获取执行减法后的正负差额
+
      print(sub_start_dict)
      print(sub_end_dict)
-     # print(add_dict)
+     print(add_dict)
 
-     # print(start_dict)
-     # print(end_dict)
 
 
 
