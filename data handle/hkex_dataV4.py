@@ -184,6 +184,7 @@ class HKex_Search:
 
           write_book.get_sheet(0).write(0,15,label='于中央结算系统的持股量总数')
           write_book.get_sheet(0).write(0,16,label='已发行股份/权证/单位')
+
           for i in range(len(participant_name_final)):#循环添加数据
             write_book.get_sheet(0).write(i + 1, 10, label=participant_name_final[i])
             write_book.get_sheet(0).write(i + 1, 11, label=shareholding_final[i])
@@ -301,7 +302,7 @@ class HKex_Search:
             elif (len(box) < 10 or len(box) > 10 or str(box).isalpha() != True):
                 warning = simpledialog.messagebox.showerror(title='严重警报', message='日期格式有误,唔好乱鬼咁输啊！')
 
-    def get_sheetdata(self,filename,sheetname):  #读取文档中的数据并比对获取差额
+    def get_sheetdata_final_dict(self,filename,sheetname):  #读取文档中的数据进行加减运算后获取差额
 
      workbook=xlrd.open_workbook(filename)
      table=workbook.sheet_by_name(sheetname)
@@ -322,10 +323,10 @@ class HKex_Search:
      self.dict_keydel(end_dict)
      self.dict_keydel(start_dict)#去除空字键值
 
-     for key in start_dict:
-        start_dict[key]=int(str.replace(start_dict[key],',',''))
-     for key in end_dict:
-        end_dict[key]=int(str.replace(end_dict[key],',',''))
+     for key in start_dict:#去除逗号便于相减
+        start_dict[key]=int(float(str.replace(str(start_dict[key]),',','')))
+     for key in end_dict:#去除逗号便于相减
+        end_dict[key]=int(float(str.replace(str(end_dict[key]),',','')))
          #将键值的逗号替换成空格
      sub_end_dict=dict(Counter(end_dict)-Counter(start_dict))
      sub_start_dict=dict(Counter(start_dict)-Counter(end_dict))
@@ -333,12 +334,46 @@ class HKex_Search:
      for key in sub_start_dict:#转换为负数
          sub_start_dict[key]=-(sub_start_dict[key])
 
-     add_dict={**sub_end_dict,**sub_start_dict}#字典相同的相加，不同的值添加 获取执行减法后的正负差额
+     add_dict={**sub_end_dict,**sub_start_dict}#字典相同的相加，不同的值添加 获取执行两次减法后合并的正负差额
+     final_dict={}#存储最终
 
-     print(sub_start_dict)
-     print(sub_end_dict)
-     print(add_dict)
+     for key in add_dict:#添加千分位分割符
+         final_dict[key]=format(add_dict[key],',')
 
+
+     total_balance_start= str.replace(table.cell(1,5).value,',','')
+     issued_share_balance_start=str.replace(table.cell(1,6).value,',','')
+
+     total_balance_end=str.replace(table.cell(1,15).value,',','')
+     issued_share_balance_end=str.replace(table.cell(1,16).value,',','')  #获取起始与最终日期的total和issued_share
+
+     total_balance=int(total_balance_end)-int(total_balance_start)
+     issued_share_balance=int(issued_share_balance_end)-int(issued_share_balance_start)
+
+
+
+     write_book=copy(workbook)
+     write_book.get_sheet(0).write(0,25,label='中央结算系统结算持股总数差额')
+     write_book.get_sheet(0).write(0,26,label='已发行股份差额')
+     write_book.get_sheet(0).write(1,25,label=total_balance)
+     write_book.get_sheet(0).write(1,26,label=issued_share_balance)#单独的发行总量差额
+
+     #写入两个单独的差额标题
+     write_book.get_sheet(0).write(0,20,label='券商名(差额)')
+     write_book.get_sheet(0).write(0,21,label='持股差额')
+
+     #将字典键和值转换为两个列表
+     key=list(final_dict.keys())
+     value=list(final_dict.values())
+
+
+     for i in range(len(key)):
+          write_book.get_sheet(0).write(i+1,20,label=key[i])
+          write_book.get_sheet(0).write(i+1,21,label=value[i])
+     write_book.save(filename)
+
+
+     return final_dict
 
 
 
@@ -371,10 +406,9 @@ class HKex_Search:
 
 
 
-    def BalanceCalculate(self,start_date,end_date,filename,sheet_name):
-        start_date_dict={}
-        final_date_dict={}
-        self.get_sheetdata(filename=filename,sheetname=sheet_name)
+    def get_Balance(self,start_date,end_date,filename,sheet_name):#傳參函數
+
+        self.get_sheetdata_final_dict(filename=filename,sheetname=sheet_name)
 
 
 
@@ -396,7 +430,7 @@ if __name__ == "__main__":
     #dataget.main_window()  # 进入程序主窗口
     filename=r'D:\披露易每日定向数据\2022-04-04_2022-04-09_01865.xlsx'
     sheetname='2022-04-04-2022-04-09'
-    dataget.get_sheetdata(filename=filename,sheetname=sheetname)
+    dataget.get_sheetdata_final_dict(filename=filename,sheetname=sheetname)
 
 '''1.返回当天披露易数据
    2.返回数据差额     '''
