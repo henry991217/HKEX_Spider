@@ -340,15 +340,17 @@ class HKex_Search:
      for key in add_dict:#添加千分位分割符
          final_dict[key]=format(add_dict[key],',')
 
+     #print(fianl_dict)测试最终
+
 
      total_balance_start= str.replace(table.cell(1,5).value,',','')
      issued_share_balance_start=str.replace(table.cell(1,6).value,',','')
 
      total_balance_end=str.replace(table.cell(1,15).value,',','')
-     issued_share_balance_end=str.replace(table.cell(1,16).value,',','')  #获取起始与最终日期的total和issued_share
+     issued_share_balance_end=str.replace(table.cell(1,16).value,',','')  #分隔符去除后进行打包
 
      total_balance=int(total_balance_end)-int(total_balance_start)
-     issued_share_balance=int(issued_share_balance_end)-int(issued_share_balance_start)
+     issued_share_balance=int(issued_share_balance_end)-int(issued_share_balance_start)#获取起始与最终日期的total和issued_share
 
 
 
@@ -379,7 +381,6 @@ class HKex_Search:
 
 
 
-
     #获取的数据
 
     def dict_keydel(self,dict):#删除字典的空键
@@ -402,35 +403,18 @@ class HKex_Search:
                        sharehoding_percent_final=sharehoding_percent1, input_stock_code=input_code,
                        input_date_final=final_date,input_date_start=start_date)#传入的参数：参与信息,股票代码,初始和终末日期
         sheet_name=str.replace(("{}".format(start_date+'-'+final_date)),'/','-')#表格名字
-        self.BalanceCalculate(start_date=start_date,end_date=final_date,filename=filename,sheet_name=sheet_name)#读取文档并对比券商并计算差额
-
-
-
-    def get_Balance(self,start_date,end_date,filename,sheet_name):#傳參函數
-
-        self.get_sheetdata_final_dict(filename=filename,sheetname=sheet_name)
-
-
-
-
-
-
-
-        # stock_name_key=list(get_sheet.rows[0])#券商名
-        # stock_amount_key=list(get_sheet.rows[1])#持股量
-        # total_key=list(get_sheet.rows[5])#持股量总数
-        # issued_share_key=list(get_sheet.rows[6])#已发行股份/权证/单位
-
-
+        self.get_sheetdata_final_dict(filename=filename,sheetname=sheet_name)#读取文档并对比券商并计算差额
+        if os.path.exists(filename):
+            os.system(filename)
 
 
 
 if __name__ == "__main__":
     dataget = HKex_Search()  # 创建对象
-    #dataget.main_window()  # 进入程序主窗口
-    filename=r'D:\披露易每日定向数据\2022-04-04_2022-04-09_01865.xlsx'
-    sheetname='2022-04-04-2022-04-09'
-    dataget.get_sheetdata_final_dict(filename=filename,sheetname=sheetname)
+    dataget.main_window()  # 进入程序主窗口
+    # filename=r'D:\披露易每日定向数据\2022-04-04_2022-04-09_01865.xlsx'
+    # sheetname='2022-04-04-2022-04-09'
+    # dataget.get_sheetdata_final_dict(filename=filename,sheetname=sheetname)
 
 '''1.返回当天披露易数据
    2.返回数据差额     '''
