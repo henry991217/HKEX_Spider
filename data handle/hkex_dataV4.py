@@ -253,7 +253,7 @@ class HKex_Search:
         button1.grid(row=0, column=0)
         button2.grid(row=0, column=2)
         button3.grid(row=6,column=2)
-        window.geometry("350x150+800+1440")  # 主界面窗口显示
+        window.geometry("350x150+800+450")  # 主界面窗口显示
         window.title('披露易数据爬虫')
         window.mainloop()
 
@@ -376,9 +376,6 @@ class HKex_Search:
 
 
      return final_dict
-
-
-
 
 
     #获取的数据
